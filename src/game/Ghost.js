@@ -1,34 +1,33 @@
 export class Ghost {
     constructor(x, y, tileSize, color) {
+        this.startX = x;
+        this.startY = y;
         this.x = x;
         this.y = y;
         this.tileSize = tileSize;
         this.color = color;
-        this.speed = 80; // Slightly slower than Pacman
-        this.dir = { x: 1, y: 0 }; // Initial direction
+        this.speed = 80;
+        this.dir = { x: 1, y: 0 };
         this.radius = tileSize / 2 - 2;
     }
 
-    update(deltaTime, maze, pacman) {
-        // Simple random movement at intersections
-        // Check if center of tile is reached to make a decision
-        const centerX = this.x + this.tileSize / 2;
-        const centerY = this.y + this.tileSize / 2;
+    reset() {
+        this.x = this.startX;
+        this.y = this.startY;
+        this.dir = { x: 1, y: 0 };
+    }
 
-        // Move
+    update(deltaTime, maze, pacman) {
         if (this.canMove(this.x, this.y, this.dir, maze)) {
             this.x += this.dir.x * this.speed * deltaTime;
             this.y += this.dir.y * this.speed * deltaTime;
 
-            // Wrap around
             if (this.x < -this.tileSize) this.x = maze.map[0].length * this.tileSize;
             if (this.x > maze.map[0].length * this.tileSize) this.x = -this.tileSize;
         } else {
-            // Hit a wall, pick new random direction
             this.changeDirection(maze);
         }
 
-        // Randomly change direction at intersections (simplified)
         if (Math.random() < 0.02) {
             this.changeDirection(maze);
         }
@@ -42,13 +41,11 @@ export class Ghost {
             { x: 1, y: 0 }
         ];
 
-        // Filter valid directions
         const validDirs = dirs.filter(d => this.canMove(this.x, this.y, d, maze));
 
         if (validDirs.length > 0) {
             this.dir = validDirs[Math.floor(Math.random() * validDirs.length)];
         } else {
-            // Dead end (shouldn't happen often in pacman maze)
             this.dir = { x: -this.dir.x, y: -this.dir.y };
         }
     }
@@ -68,13 +65,11 @@ export class Ghost {
         const cx = this.x + this.tileSize / 2;
         const cy = this.y + this.tileSize / 2;
 
-        // Draw ghost body (circle top, rect bottom)
         ctx.arc(cx, cy - 2, this.radius, Math.PI, 0);
         ctx.lineTo(cx + this.radius, cy + this.radius);
         ctx.lineTo(cx - this.radius, cy + this.radius);
         ctx.fill();
 
-        // Eyes
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(cx - 4, cy - 4, 3, 0, Math.PI * 2);

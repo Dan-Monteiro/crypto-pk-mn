@@ -1,22 +1,30 @@
 export class Pacman {
     constructor(x, y, tileSize) {
-        this.x = x;
-        this.y = y;
+        this.startX = x;
+        this.startY = y;
         this.tileSize = tileSize;
         this.radius = tileSize / 2 - 2;
-        this.speed = 100; // pixels per second
-
-        this.currentDir = { x: 0, y: 0 };
-        this.nextDir = { x: 0, y: 0 };
-
-        this.mouthOpen = 0;
-        this.mouthSpeed = 10;
-        this.mouthOpening = true;
+        this.speed = 100;
+        this.reset();
 
         document.addEventListener('keydown', (e) => this.handleInput(e));
     }
 
+    reset() {
+        this.x = this.startX;
+        this.y = this.startY;
+        this.currentDir = { x: 0, y: 0 };
+        this.nextDir = { x: 0, y: 0 };
+        this.mouthOpen = 0;
+        this.mouthSpeed = 10;
+        this.mouthOpening = true;
+    }
+
     handleInput(e) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) > -1) {
+            e.preventDefault();
+        }
+
         switch (e.code) {
             case 'ArrowUp': this.nextDir = { x: 0, y: -1 }; break;
             case 'ArrowDown': this.nextDir = { x: 0, y: 1 }; break;
@@ -26,7 +34,6 @@ export class Pacman {
     }
 
     update(deltaTime, maze) {
-        // Try to change direction if aligned with grid
         if (this.nextDir.x !== 0 || this.nextDir.y !== 0) {
             if (this.canMove(this.x, this.y, this.nextDir, maze)) {
                 this.currentDir = this.nextDir;
@@ -34,21 +41,14 @@ export class Pacman {
             }
         }
 
-        // Move
         if (this.canMove(this.x, this.y, this.currentDir, maze)) {
             this.x += this.currentDir.x * this.speed * deltaTime;
             this.y += this.currentDir.y * this.speed * deltaTime;
 
-            // Wrap around (tunnel)
             if (this.x < -this.tileSize) this.x = maze.map[0].length * this.tileSize;
             if (this.x > maze.map[0].length * this.tileSize) this.x = -this.tileSize;
-        } else {
-            // Align to grid if stuck
-            // this.x = Math.round(this.x / this.tileSize) * this.tileSize;
-            // this.y = Math.round(this.y / this.tileSize) * this.tileSize;
         }
 
-        // Mouth animation
         if (this.mouthOpening) {
             this.mouthOpen += this.mouthSpeed * deltaTime;
             if (this.mouthOpen > 0.2) this.mouthOpening = false;
@@ -59,15 +59,10 @@ export class Pacman {
     }
 
     canMove(x, y, dir, maze) {
-        // Simple center point check for now, ideally check bounding box
-        // Predicting next position
-        const nextX = x + dir.x * (this.tileSize / 2); // Look ahead half a tile
+        const nextX = x + dir.x * (this.tileSize / 2);
         const nextY = y + dir.y * (this.tileSize / 2);
-
-        // Check center
         const centerX = nextX + this.tileSize / 2;
         const centerY = nextY + this.tileSize / 2;
-
         return !maze.isWall(centerX, centerY);
     }
 
@@ -78,7 +73,6 @@ export class Pacman {
         const cx = this.x + this.tileSize / 2;
         const cy = this.y + this.tileSize / 2;
 
-        // Calculate rotation based on direction
         let angle = 0;
         if (this.currentDir.x === 1) angle = 0;
         if (this.currentDir.x === -1) angle = Math.PI;

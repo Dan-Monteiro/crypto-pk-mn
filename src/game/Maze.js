@@ -4,8 +4,16 @@ export class Maze {
         this.tileSize = 16;
         this.wallColor = '#ffe8f2';
 
+        this.btcImage = new Image();
+        this.btcImage.src = 'btc.png';
+
+        this.itemsRemaining = 0;
+        this.reset();
+    }
+
+    reset() {
         // 1 = Wall, 0 = Dot, 2 = Power Pellet, 3 = Empty, 4 = Ghost House
-        this.map = [
+        const initialMap = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1],
@@ -38,6 +46,16 @@ export class Maze {
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ];
+        // Deep copy
+        this.map = initialMap.map(row => [...row]);
+        this.itemsRemaining = 0;
+        for (let r = 0; r < this.map.length; r++) {
+            for (let c = 0; c < this.map[r].length; c++) {
+                if (this.map[r][c] === 0 || this.map[r][c] === 2) {
+                    this.itemsRemaining++;
+                }
+            }
+        }
     }
 
     draw() {
@@ -54,13 +72,23 @@ export class Maze {
                     this.ctx.lineWidth = 1;
                     this.ctx.strokeRect(x, y, this.tileSize, this.tileSize);
                 } else if (tile === 0) {
-                    this.ctx.fillStyle = '#85bb65'; // Money green
-                    this.ctx.fillRect(x + 6, y + 6, 4, 4);
+                    // Cash ($)
+                    this.ctx.fillStyle = '#85bb65';
+                    this.ctx.font = '12px monospace';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText('$', x + 8, y + 9);
                 } else if (tile === 2) {
-                    this.ctx.fillStyle = '#f7931a'; // Bitcoin orange
-                    this.ctx.beginPath();
-                    this.ctx.arc(x + 8, y + 8, 6, 0, Math.PI * 2);
-                    this.ctx.fill();
+                    // BTC Image
+                    if (this.btcImage.complete) {
+                        this.ctx.drawImage(this.btcImage, x, y, this.tileSize, this.tileSize);
+                    } else {
+                        // Fallback
+                        this.ctx.fillStyle = '#f7931a';
+                        this.ctx.beginPath();
+                        this.ctx.arc(x + 8, y + 8, 6, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
                 }
             }
         }
@@ -82,7 +110,8 @@ export class Maze {
         if (row >= 0 && row < this.map.length && col >= 0 && col < this.map[0].length) {
             const tile = this.map[row][col];
             if (tile === 0 || tile === 2) {
-                this.map[row][col] = 3; // Set to empty
+                this.map[row][col] = 3;
+                this.itemsRemaining--;
                 return tile;
             }
         }
